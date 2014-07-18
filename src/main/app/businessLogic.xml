@@ -137,7 +137,7 @@ payload['Account'].put('Name', name);]]></expression-component>
                 </choice>
             </batch:step>
             <batch:step name="forEachContactUpsertInSalesforceStep">
-            	<data-mapper:transform doc:name="transform Siebel contact to Salesforce contact" config-ref="ContactDataMapper"/>
+                <data-mapper:transform doc:name="transform Siebel contact to Salesforce contact" config-ref="SiebelSalesforce"/>
                 <expression-component doc:name="set contact's parent account in map-payload"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInSalesforce']);
 if (recordVars['contactInB'] instanceof NullPayload){  
   	payload.remove('Id');  

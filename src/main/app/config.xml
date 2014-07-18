@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 
     <data-mapper:config name="DataMapper" transformationGraphPath="map_to_map.grf" doc:name="DataMapper"/>
     <data-mapper:config name="AccountDataMapper" transformationGraphPath="account_map_to_map.grf" doc:name="Account DataMapper"/>
-    <data-mapper:config name="ContactDataMapper" transformationGraphPath="contact_to_contact.grf" doc:name="Contact DataMapper"/>
+    <data-mapper:config name="SiebelSalesforce" transformationGraphPath="siebel_to_salesforce.grf" doc:name="DataMapper"/>
 
 	<spring:beans>
 		<spring:bean id="PollSynchronizer" name="PollSynchronizer"
