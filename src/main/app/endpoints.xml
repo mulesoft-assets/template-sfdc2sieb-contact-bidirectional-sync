@@ -1,27 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:siebel="http://www.mulesoft.org/schema/mule/siebel" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:spring="http://www.springframework.org/schema/beans"
-      version="EE-3.4.1"
+      version="EE-3.5.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/siebel/current/mule-siebel.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd">
 
-	<!-- 	In this file you should declare all your inbound endpoints and from here controll the access to your application -->
-
-	<flow name="triggerFlow" processingStrategy="synchronous" doc:name="triggerFlow" doc:description="This is the simpliest entry point to start the excecution of your Template
-Here you should:
-	* Define any inbound endpoint
-	* Handle any input parameter and transform it into the expected format by the mainFlow
-Here you should not:
-	* Run validations against external systems
-	* Choose flow of your application based on input parameters">
-        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="${http.port}" path="" doc:name="Start Synchronization"/>
-        
-        <flow-ref name="mainFlow" doc:description="mainFlow"  doc:name="mainFlow"/>
-    
+	<flow name="triggerFlowToSiebel" processingStrategy="synchronous" doc:name="triggerFlowToSiebel">
+        <poll doc:name="fireup Contact synchronization">
+          	<fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
+          	<watermark variable="lastQueryDate" default-expression="${watermark.default.expression.sfdc}" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
+            <processor-chain doc:name="Processor Chain">
+                <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
+	           	<sfdc:query config-ref="Salesforce"  doc:name="query contacts with filtering criteria from Salesforce" query="SELECT Email, FirstName, LastName, Id, LastModifiedDate, MailingCity, MailingState, MailingCountry, MailingPostalCode, Title, Account.Id, Account.Name, Account.AccountNumber, Account.AccountSource, Account.AnnualRevenue, Account.BillingCity, Account.BillingCountry, Account.BillingPostalCode, Account.BillingState, Account.BillingStreet, Account.Description, Account.Fax, Account.Industry, Account.NumberOfEmployees, Account.Ownership, Account.ParentId, Account.Phone, Account.Rating, Account.ShippingCity, Account.ShippingCountry, Account.ShippingPostalCode, Account.ShippingState,
+	           	 Account.ShippingStreet, Account.Sic, Account.SicDesc, Account.Site, Account.TickerSymbol, Account.Type, Account.Website FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND Email != null AND MailingCountry IN ('U.S.','United States','US')">
+	          	</sfdc:query>
+            </processor-chain>
+        </poll>
+        <flow-ref name="mainFlowToSiebel" doc:name="trigger mainFlowToSiebel"/>
     </flow>
+
+	<flow name="triggerFlowToSalesforce" processingStrategy="synchronous" doc:name="triggerFlowToSalesforce">
+		<poll doc:name="Salesforce for users">
+            <fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
+            <watermark variable="lastQueryDate" default-expression="${watermark.default.expression.sieb}" selector="MAX" selector-expression="#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).parseDateTime(payload['Last Update - SDQ'])]"/>
+            <processor-chain doc:name="Processor Chain">
+                <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
+	            <siebel:query-business-components config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" searchExpression="[Last Update - SDQ] &gt; '#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).print(flowVars['lastQueryDate'])]" doc:name="query contacts with filtering criteria from Siebel">
+	                <siebel:fields-to-retrieve>
+	                	<siebel:fields-to-retrieve>Id</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Email Address</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>First Name</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Last Name</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Work Phone #</siebel:fields-to-retrieve>					 
+						 <siebel:fields-to-retrieve>Home Phone #</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Fax Phone #</siebel:fields-to-retrieve>					 
+						 <siebel:fields-to-retrieve>Birth Date</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Assistant</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Account</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Last Update - SDQ</siebel:fields-to-retrieve>
+	                </siebel:fields-to-retrieve>
+	            </siebel:query-business-components>
+            </processor-chain>
+        </poll>
+        <logger message="lastQueryDate:  #[flowVars.'lastQueryDate']" level="INFO" doc:name="Log lastQueryDate"/>
+        <flow-ref name="mainFlowToSalesforce" doc:name="trigger mainFlowToSalesforce"/>
+    </flow>
+
 </mule>
