@@ -89,7 +89,7 @@ list.add(payload);
             <batch:step name="DataTransformationStep">
                 <data-mapper:transform doc:name="transform Salesforce contact to Siebel contact" config-ref="DataMapper"/>
             </batch:step>
-            <batch:step name="createContactsInSiebelStep" accept-expression="!(payload is NullPayload)">
+            <batch:step name="createContactsInSiebelStep" accept-expression="!(payload is NullPayload) || (recordVars['siebelContact'] is NullPayload  &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById'))">
 		        <logger message="Contacts to upsert: #[payload]" level="INFO" doc:name="log contacts to upsert"/>
 		        <siebel:upsert-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" doc:name="upsert contacts in Siebel">
 		            <siebel:business-component-fields ref="#[payload]"/>
@@ -136,7 +136,7 @@ payload['Account'].put('Name', name);]]></expression-component>
                     </otherwise>
                 </choice>
             </batch:step>
-            <batch:step name="forEachContactUpsertInSalesforceStep">
+            <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" accept-expression="'${sieb.integration.user.id}' != payload['Updated By']">
                 <data-mapper:transform doc:name="transform Siebel contact to Salesforce contact" config-ref="SiebelSalesforce"/>
                 <expression-component doc:name="set contact's parent account in map-payload"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInSalesforce']);
 if (recordVars['contactInB'] instanceof NullPayload){  

@@ -14,12 +14,12 @@ http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/s
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd">
 
 	<flow name="triggerFlowToSiebel" processingStrategy="synchronous" doc:name="triggerFlowToSiebel">
-        <poll doc:name="fireup Contact synchronization">
+        <poll doc:name="poll Salesforce for contacts">
           	<fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
           	<watermark variable="lastQueryDate" default-expression="${watermark.default.expression.sfdc}" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
-	           	<sfdc:query config-ref="Salesforce"  doc:name="query contacts with filtering criteria from Salesforce" query="SELECT Email, FirstName, LastName, Id, LastModifiedDate, MailingCity, MailingState, MailingCountry, MailingPostalCode, Title, Account.Id, Account.Name, Account.AccountNumber, Account.AccountSource, Account.AnnualRevenue, Account.BillingCity, Account.BillingCountry, Account.BillingPostalCode, Account.BillingState, Account.BillingStreet, Account.Description, Account.Fax, Account.Industry, Account.NumberOfEmployees, Account.Ownership, Account.ParentId, Account.Phone, Account.Rating, Account.ShippingCity, Account.ShippingCountry, Account.ShippingPostalCode, Account.ShippingState,
+	           	<sfdc:query config-ref="Salesforce"  doc:name="query contacts with filtering criteria from Salesforce" query="SELECT Email, FirstName, LastName, Id, LastModifiedDate, LastModifiedById, MailingCity, MailingState, MailingCountry, MailingPostalCode, Title, Account.Id, Account.Name, Account.AccountNumber, Account.AccountSource, Account.AnnualRevenue, Account.BillingCity, Account.BillingCountry, Account.BillingPostalCode, Account.BillingState, Account.BillingStreet, Account.Description, Account.Fax, Account.Industry, Account.NumberOfEmployees, Account.Ownership, Account.ParentId, Account.Phone, Account.Rating, Account.ShippingCity, Account.ShippingCountry, Account.ShippingPostalCode, Account.ShippingState,
 	           	 Account.ShippingStreet, Account.Sic, Account.SicDesc, Account.Site, Account.TickerSymbol, Account.Type, Account.Website FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND Email != null AND MailingCountry IN ('U.S.','United States','US')">
 	          	</sfdc:query>
             </processor-chain>
@@ -28,29 +28,25 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
     </flow>
 
 	<flow name="triggerFlowToSalesforce" processingStrategy="synchronous" doc:name="triggerFlowToSalesforce">
-		<poll doc:name="Salesforce for users">
+		<poll doc:name="poll Siebel for contacts">
             <fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
-            <watermark variable="lastQueryDate" default-expression="${watermark.default.expression.sieb}" selector="MAX" selector-expression="#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).parseDateTime(payload['Last Update - SDQ'])]"/>
+            <watermark variable="siebelLastQueryDate" default-expression="${watermark.default.expression.sieb}" selector="FIRST" selector-expression="#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).parseMillis(payload['Last Update - SDQ'])]"/>
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
-	            <siebel:query-business-components config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" searchExpression="[Last Update - SDQ] &gt; '#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).print(flowVars['lastQueryDate'])]" doc:name="query contacts with filtering criteria from Siebel">
+	            <siebel:query-business-components config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" searchExpression="[Last Update - SDQ] &gt; '#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).print(flowVars['siebelLastQueryDate'])]" doc:name="query contacts with filtering criteria from Siebel">
 	                <siebel:fields-to-retrieve>
 	                	<siebel:fields-to-retrieve>Id</siebel:fields-to-retrieve>
 						 <siebel:fields-to-retrieve>Email Address</siebel:fields-to-retrieve>
 						 <siebel:fields-to-retrieve>First Name</siebel:fields-to-retrieve>
 						 <siebel:fields-to-retrieve>Last Name</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Work Phone #</siebel:fields-to-retrieve>					 
-						 <siebel:fields-to-retrieve>Home Phone #</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Fax Phone #</siebel:fields-to-retrieve>					 
-						 <siebel:fields-to-retrieve>Birth Date</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Assistant</siebel:fields-to-retrieve>
 						 <siebel:fields-to-retrieve>Account</siebel:fields-to-retrieve>
 						 <siebel:fields-to-retrieve>Last Update - SDQ</siebel:fields-to-retrieve>
+						 <siebel:fields-to-retrieve>Updated By</siebel:fields-to-retrieve>
 	                </siebel:fields-to-retrieve>
 	            </siebel:query-business-components>
             </processor-chain>
         </poll>
-        <logger message="lastQueryDate:  #[flowVars.'lastQueryDate']" level="INFO" doc:name="Log lastQueryDate"/>
+        <logger message="siebelLastQueryDate:  #[flowVars.'siebelLastQueryDate']" level="INFO" doc:name="Log siebelLastQueryDate"/>
         <flow-ref name="mainFlowToSalesforce" doc:name="trigger mainFlowToSalesforce"/>
     </flow>
 
