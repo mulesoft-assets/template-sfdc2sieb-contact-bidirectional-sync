@@ -36,12 +36,12 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
 	            <siebel:query-business-components config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" searchExpression="[Last Update - SDQ] &gt; '#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).print(flowVars['siebelLastQueryDate'])]" doc:name="query contacts with filtering criteria from Siebel">
 	                <siebel:fields-to-retrieve>
 	                	<siebel:fields-to-retrieve>Id</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Email Address</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>First Name</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Last Name</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Account</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Last Update - SDQ</siebel:fields-to-retrieve>
-						 <siebel:fields-to-retrieve>Updated By</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>Email Address</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>First Name</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>Last Name</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>Account</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>Last Update - SDQ</siebel:fields-to-retrieve>
+						<siebel:fields-to-retrieve>Updated By</siebel:fields-to-retrieve>
 	                </siebel:fields-to-retrieve>
 	            </siebel:query-business-components>
             </processor-chain>
