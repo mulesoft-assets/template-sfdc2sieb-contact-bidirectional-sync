@@ -65,13 +65,13 @@ list.add(payload);
 					            <siebel:create-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Account.Account" doc:name="create account in Siebel">
 					                <siebel:business-component-fields ref="#[payload]"/>
 					            </siebel:create-business-component>
-                                <expression-transformer expression="#[payload.getCreatedObjects().get(0)]" doc:name="get new account id"/>
+                                <expression-transformer expression="#[payload.getCreatedObjects().get(0)]" doc:name="get the id of the created account"/>
 	                        </processor-chain>
                         </enricher>
                     </when>
                     <otherwise>
                         <enricher target="#[recordVars['idOfAccountInSiebel']]" doc:name="store account id in var idOfAccountInSiebel">
-     	                   <expression-transformer expression="#[flowVars['accountInSiebel'].get(0).get('Id')]" doc:name="get account id"/>
+     	                   <expression-transformer expression="#[flowVars['accountInSiebel'].get(0).get('Id')]" doc:name="get the id of the account in Siebel"/>
                         </enricher>
                     </otherwise>
                 </choice>
@@ -106,7 +106,7 @@ list.add(payload);
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
             <batch:step name="getContactInSalesforceStep">
-                <enricher source="#[payload]" target="#[recordVars['contactInB']]" doc:name="store Salesforce contact in var 'contactInB'">
+                <enricher source="#[payload]" target="#[recordVars['salesforceContact']]" doc:name="store Salesforce contact in var 'salesforceContact'">
                     <sfdc:query-single config-ref="Salesforce" query="SELECT Id, LastModifiedDate FROM Contact WHERE Email = '#[payload[&quot;Email Address&quot;]]'" doc:name="Query Salesforce for existing Contact"/>
                 </enricher>
             </batch:step>
@@ -125,25 +125,25 @@ payload['Account'].put('Name', name);]]></expression-component>
                                 <sfdc:create config-ref="Salesforce" type="Account" doc:name="create account in Salesforce">
                                     <sfdc:objects ref="#[payload]"/>
                                 </sfdc:create>
-                                <expression-transformer expression="#[payload[0].getId()]" doc:name="get the id of the account created"/>
+                                <expression-transformer expression="#[payload[0].getId()]" doc:name="get the id of the created account"/>
                             </processor-chain>
                         </enricher>
                     </when>
                     <otherwise>
                         <enricher source="#[payload]" target="#[recordVars['idOfAccountInSalesforce']]" doc:name="store account id in var idOfAccountInSalesforce">
-                            <expression-transformer expression="#[recordVars['salesforceAccount']['Id']]" doc:name="get account id"/>
+                            <expression-transformer expression="#[recordVars['salesforceAccount']['Id']]" doc:name="get the id of the account in Salesforce"/>
                         </enricher>
                     </otherwise>
                 </choice>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" accept-expression="recordVars['contactInB'] is NullPayload || org.mule.templates.date.DateUtils.stringToDateTimeWithProvidedOffset(payload['Last Update - SDQ'], 'MM/dd/yyyy HH:mm:ss', '${sieb.timeOffset}').isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(recordVars['contactInB']['LastModifiedDate'])) &amp;&amp; '${sieb.integration.user.id}' != payload['Updated By']">
+            <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" accept-expression="recordVars['salesforceContact'] is NullPayload || org.mule.templates.date.DateUtils.stringToDateTimeWithProvidedOffset(payload['Last Update - SDQ'], 'MM/dd/yyyy HH:mm:ss', '${sieb.timeOffset}').isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(recordVars['salesforceContact']['LastModifiedDate'])) &amp;&amp; '${sieb.integration.user.id}' != payload['Updated By']">
                 <data-mapper:transform doc:name="transform Siebel contact to Salesforce contact" config-ref="SiebelSalesforce"/>
                 <expression-component doc:name="set contact's parent account in map-payload"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInSalesforce']);
-if (recordVars['contactInB'] instanceof NullPayload){  
+if (recordVars['salesforceContact'] instanceof NullPayload){  
   	payload.remove('Id');  
   }  
   else {  
-  	payload.put('Id', recordVars['contactInB']['Id']);  
+  	payload.put('Id', recordVars['salesforceContact']['Id']);  
   }]]></expression-component>
                 <batch:commit doc:name="Batch Commit" size="200">
                     <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="Contact" doc:name="upsert contact in Salesforce">

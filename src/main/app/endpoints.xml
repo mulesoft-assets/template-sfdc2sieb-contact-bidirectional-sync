@@ -18,7 +18,7 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
           	<fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
           	<watermark variable="lastQueryDate" default-expression="${watermark.default.expression.sfdc}" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
             <processor-chain doc:name="Processor Chain">
-                <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
+                <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
 	           	<sfdc:query config-ref="Salesforce"  doc:name="query contacts with filtering criteria from Salesforce" query="SELECT Email, FirstName, LastName, Id, LastModifiedDate, LastModifiedById, MailingCity, MailingState, MailingCountry, MailingPostalCode, Title, Account.Id, Account.Name, Account.AccountNumber, Account.AccountSource, Account.AnnualRevenue, Account.BillingCity, Account.BillingCountry, Account.BillingPostalCode, Account.BillingState, Account.BillingStreet, Account.Description, Account.Fax, Account.Industry, Account.NumberOfEmployees, Account.Ownership, Account.ParentId, Account.Phone, Account.Rating, Account.ShippingCity, Account.ShippingCountry, Account.ShippingPostalCode, Account.ShippingState,
 	           	 Account.ShippingStreet, Account.Sic, Account.SicDesc, Account.Site, Account.TickerSymbol, Account.Type, Account.Website FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND Email != null AND MailingCountry IN ('U.S.','United States','US')">
 	          	</sfdc:query>
@@ -32,7 +32,7 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
             <fixed-frequency-scheduler frequency="${poll.frequency}" startDelay="${poll.startDelayMillis}"/>
             <watermark variable="siebelLastQueryDate" default-expression="${watermark.default.expression.sieb}" selector="FIRST" selector-expression="#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).parseMillis(payload['Last Update - SDQ'])]"/>
             <processor-chain doc:name="Processor Chain">
-                <expression-component doc:name="acquire Lock"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
+                <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
 	            <siebel:query-business-components config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" searchExpression="[Last Update - SDQ] &gt; '#[org.joda.time.format.DateTimeFormat.forPattern(&quot;M/d/y H:m:s&quot;).print(flowVars['siebelLastQueryDate'])]" doc:name="query contacts with filtering criteria from Siebel">
 	                <siebel:fields-to-retrieve>
 	                	<siebel:fields-to-retrieve>Id</siebel:fields-to-retrieve>
