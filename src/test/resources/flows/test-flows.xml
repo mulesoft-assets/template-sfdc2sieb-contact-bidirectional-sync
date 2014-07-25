@@ -20,11 +20,11 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 			initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW" />
 	</sfdc:config>
 
-	<siebel:config name="TestSiebel" user="${sieb.user}"
-		password="${sieb.password}" server="${sieb.server}" serverName="${sieb.serverName}"
-		objectManager="${sieb.objectManager}" doc:name="Oracle Siebel Business Objects"
+	<siebel:config name="TestSiebel" user="${test.sieb.user}"
+		password="${test.sieb.password}" server="${test.sieb.server}" serverName="${test.sieb.serverName}"
+		objectManager="${test.sieb.objectManager}" doc:name="Oracle Siebel Business Objects"
 		doc:description="Destination Oracle Siebel Business Objects instance. This is the destination organization, where accounts will be migrated to."
-		port="${sieb.port}">
+		port="${test.sieb.port}">
 		<siebel:connection-pooling-profile
 			initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW" />
 	</siebel:config>
@@ -74,6 +74,8 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 		<sfdc:query-single config-ref="Salesforce"
 			query="SELECT Account.Name FROM Contact WHERE (Email = '#[payload['Email']]'  )"
 			doc:name="Salesforce" />
+        <logger level="INFO"
+                message="Query contact's account in Salesforce result: #[payload]" doc:name="Logger" />
 	</sub-flow>
 	<sub-flow name="queryContactsAccountNameFromSiebelFlow"
 		doc:name="queryContactsAccountNameFromSiebelFlow">
