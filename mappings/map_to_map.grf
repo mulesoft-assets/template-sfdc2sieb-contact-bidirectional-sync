@@ -7,6 +7,7 @@
 <Field __sourcePath="{}/Salesforce/Email" containerType="SINGLE" label="Email" name="Email" type="string"/>
 <Field __sourcePath="{}/Salesforce/FirstName" containerType="SINGLE" label="FirstName" name="FirstName" type="string"/>
 <Field __sourcePath="{}/Salesforce/LastName" containerType="SINGLE" label="LastName" name="LastName" type="string"/>
+<Field __sourcePath="{}/Salesforce/AccountId" containerType="SINGLE" label="AccountId" name="AccountId" type="string"/>
 </Record>
 </Metadata>
 <Metadata __index="0" __referenceCounter="1" __sourcePath="{}/Siebel" _dataStructure="OBJECT" _id="__id" _type="Output" id="0d778bfd-d112-41b5-972a-8e7a514f0820">
@@ -16,6 +17,7 @@
 <Field __sourcePath="{}/Siebel/Id" containerType="SINGLE" label="Id" name="Id" type="string"/>
 <Field __sourcePath="{}/Siebel/First_x0020Name" containerType="SINGLE" label="First Name" name="First_Name" type="string"/>
 <Field __sourcePath="{}/Siebel/Last_x0020Name" containerType="SINGLE" label="Last Name" name="Last_Name" type="string"/>
+<Field __sourcePath="{}/Siebel/Account_x0020Id" containerType="SINGLE" label="Account Id" name="Account_Id" type="string"/>
 </Record>
 </Metadata>
 <Dictionary>
@@ -31,6 +33,7 @@
   <Mapping cloverField="Email" trim="true" xpath="Email"/>
   <Mapping cloverField="FirstName" trim="true" xpath="FirstName"/>
   <Mapping cloverField="LastName" trim="true" xpath="LastName"/>
+  <Mapping cloverField="AccountId" trim="true" xpath="AccountId"/>
 </Context>
 ]]></attr>
 <attr name="_data_format"><![CDATA[MAP]]></attr>
@@ -43,7 +46,8 @@ output.__id = input.__id;
 output.Id = input.SiebelId;
 output.Street_Address = input.Email;
 output.First_Name = input.FirstName;
-output.Last_Name = input.LastName;]]></attr>
+output.Last_Name = input.LastName;
+output.Account_Id = input.AccountId;]]></attr>
 </Node>
 <Node cacheInMemory="true" enabled="enabled" fileURL="dict:outputPayload" guiName="Map&lt;k,v&gt; WRITER" guiX="900" guiY="20" id="MAP_WRITER0" type="MAP_WRITER">
 <attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
@@ -52,6 +56,7 @@ output.Last_Name = input.LastName;]]></attr>
   <Id>$0.Id</Id>
   <clover:element clover:name="First Name">$0.First_Name</clover:element>
   <clover:element clover:name="Last Name">$0.Last_Name</clover:element>
+  <clover:element clover:name="Account Id">$0.Account_Id</clover:element>
 </Siebel>]]></attr>
 <attr name="_data_format"><![CDATA[MAP]]></attr>
 </Node>
