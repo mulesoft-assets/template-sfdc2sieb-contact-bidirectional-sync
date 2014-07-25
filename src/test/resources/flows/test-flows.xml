@@ -77,9 +77,17 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 	</sub-flow>
 	<sub-flow name="queryContactsAccountNameFromSiebelFlow"
 		doc:name="queryContactsAccountNameFromSiebelFlow">
-		<sfdc:query-single config-ref="OracleSiebelBusinessObjects"
-			query="SELECT Account.Name FROM Contact WHERE (Email = '#[payload['Email']]'  )"
-			doc:name="Salesforce" />
+        <siebel:query-business-components
+                config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact"
+                doc:name="query Contacts from Siebel" searchExpression="[Email Address] = &quot;#[payload['Email']]&quot;">
+            <siebel:fields-to-retrieve>
+                <siebel:fields-to-retrieve>Id</siebel:fields-to-retrieve>
+                <siebel:fields-to-retrieve>First Name</siebel:fields-to-retrieve>
+                <siebel:fields-to-retrieve>Last Name</siebel:fields-to-retrieve>
+                <siebel:fields-to-retrieve>Email Address</siebel:fields-to-retrieve>
+                <siebel:fields-to-retrieve>Account</siebel:fields-to-retrieve>
+            </siebel:fields-to-retrieve>
+        </siebel:query-business-components>
 	</sub-flow>
 	<sub-flow name="deleteContactFromSalesforceFlow" doc:name="deleteContactFromSalesforceFlow">
 		<sfdc:delete config-ref="Salesforce" doc:name="Salesforce">
