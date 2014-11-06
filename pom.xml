@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.mule.templates</groupId>
 		<artifactId>templates-tooling-parent-pom</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.7</version>
 	</parent>
 
 	<artifactId>template-sfdc2sieb-contact-bidirectional-sync</artifactId>
@@ -15,7 +15,8 @@
 	<name>template-sfdc2sieb-contact-bidirectional-sync Anypoint Template Project</name>
 
 	<properties>
-		<siebel.version>1.0.0</siebel.version>
+		<siebel.version>2.0.0</siebel.version>
+        <mule.version>3.5.2</mule.version>
 	</properties>
 
 	<build>
@@ -52,6 +53,18 @@
 			<artifactId>mule-module-sfdc</artifactId>
 			<version>${sfdc.version}</version>
 		</dependency>
+		<dependency>
+		    <groupId>siebel</groupId>
+		    <artifactId>siebel</artifactId>
+			<version>8.1.1.11</version>
+		    <scope>test</scope>
+		</dependency>
+		<dependency>
+		    <groupId>siebel</groupId>
+		    <artifactId>siebel-ji-enu</artifactId>
+			<version>8.1.1.11</version>
+		    <scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -59,6 +72,12 @@
 			<id>mulesoft-releases</id>
 			<name>MuleSoft Releases Repository</name>
 			<url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-thirdparty</id>
+			<name>MuleSoft Thirdparty Repository</name>
+			<url>https://repository.mulesoft.org/nexus/content/repositories/thirdparty/</url>
 			<layout>default</layout>
 		</repository>
 		<repository>

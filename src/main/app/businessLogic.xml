@@ -91,9 +91,8 @@ list.add(payload);
             </batch:step>
             <batch:step name="createContactsInSiebelStep" accept-expression="!(payload is NullPayload) ||  recordVars['siebelContact'] is NullPayload || !org.mule.templates.date.DateUtils.stringToDateTimeWithProvidedOffset(recordVars['siebelContact']['Last Update - SDQ'], 'MM/dd/yyyy HH:mm:ss', '${sieb.timeOffset}').isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload['LastModifiedDate'])) &amp;&amp; '${sfdc.integration.user.id}' != payload['LastModifiedById']">
 		        <logger message="Contacts to upsert: #[payload]" level="INFO" doc:name="log contacts to upsert"/>
-		        <siebel:upsert-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" doc:name="upsert contacts in Siebel">
-		            <siebel:business-component-fields ref="#[payload]"/>
-		        </siebel:upsert-business-component>
+		        <siebel:create-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" doc:name="upsert contacts in Siebel">
+		        </siebel:create-business-component>
             </batch:step>
         </batch:process-records>
         <batch:on-complete>
