@@ -75,7 +75,7 @@
 			<layout>default</layout>
 		</repository>
 		<repository>
-			<id>mulesoft-thirdparty</id>
+			<id>mule-ee-thirdparty</id>
 			<name>MuleSoft Thirdparty Repository</name>
 			<url>https://repository.mulesoft.org/nexus/content/repositories/thirdparty/</url>
 			<layout>default</layout>
