@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.mule.templates</groupId>
 		<artifactId>templates-tooling-parent-pom</artifactId>
-		<version>1.0.7</version>
+		<version>1.0.13</version>
 	</parent>
 
 	<artifactId>template-sfdc2sieb-contact-bidirectional-sync</artifactId>
@@ -16,7 +16,6 @@
 
 	<properties>
 		<siebel.version>2.0.0</siebel.version>
-        <mule.version>3.5.2</mule.version>
 	</properties>
 
 	<build>
@@ -42,7 +41,6 @@
 	</build>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-module-siebel</artifactId>

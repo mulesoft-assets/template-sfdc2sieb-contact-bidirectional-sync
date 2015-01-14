@@ -6,7 +6,7 @@
       xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:spring="http://www.springframework.org/schema/beans"
-      version="EE-3.5.1"
+      version="EE-3.5.2"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
@@ -106,12 +106,12 @@ list.add(payload);
         <batch:process-records>
             <batch:step name="getContactInSalesforceStep">
                 <enricher source="#[payload]" target="#[recordVars['salesforceContact']]" doc:name="store Salesforce contact in var 'salesforceContact'">
-                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id, LastModifiedDate FROM Contact WHERE Email = '#[payload[&quot;Email Address&quot;]]'" doc:name="Query Salesforce for existing Contact"/>
+                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id, LastModifiedDate FROM Contact WHERE Email = '#[payload[&quot;Email Address&quot;]]'" doc:name="query Salesforce for existing Contact"/>
                 </enricher>
             </batch:step>
             <batch:step name="findOrCreateAccountInSalesforceStep" accept-expression="payload['Account'] != ''" accept-policy="ALL">
                 <enricher doc:name="store Salesforce account into var 'salesforceAccount'" source="#[payload]" target="#[recordVars['salesforceAccount']]">
-                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id,Name from Account where Name = '#payload[&quot;Account&quot;]'" doc:name="Query Salesforce for existing Account"/>
+                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id,Name from Account where Name = '#payload[&quot;Account&quot;]'" doc:name="query Salesforce for existing Account"/>
                 </enricher>
                 <choice doc:name="Choice">
                     <when expression="#[recordVars['salesforceAccount'] is NullPayload]">

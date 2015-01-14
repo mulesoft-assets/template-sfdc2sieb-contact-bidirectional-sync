@@ -26,11 +26,13 @@ Note that using this template is subject to the conditions of this [License Agre
 Please review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule ESB Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
 
 # Use Case <a name="usecase"/>
-As a Salesforce admin I want to have my Contacts syncronized between Salesforce and Oracle Siebel Business Objects.
+As a Salesforce admin I want to have my Contacts synchronized between Salesforce and Oracle Siebel Business Objects.
 
-This Template should serve as a foundation for setting an online bi-directional sync of Contacts between Salesforce and Oracle Siebel Business Objects, being able to specify filtering criterias. 
+This Template should serve as a foundation for setting an online bi-directional synchronization of Contacts between Salesforce and Oracle Siebel Business Objects, being able to specify filtering criteria. 
 
 The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured either in Salesforces or Siebel during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+
+The integration also migrate associated accounts the the destination system as well. Account synchronization policy must be either `syncAccount` or `assignDummyAccount`. When (dummy) account is configured to be used, all migrated contacts are associated with it.
 
 Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
 
@@ -124,7 +126,7 @@ Simple steps to get Salesforce to Siebel Contact Bidirectional Sync running.
 
 
 ## Running on premise <a name="runonopremise"/>
-In this section we detail the way you have to run you Anypoint Temple on you computer.
+In this section we detail the way you should run your Anypoint Template on your computer.
 
 
 ### Where to Download Mule Studio and Mule ESB
@@ -156,7 +158,7 @@ Once you have imported you Anypoint Template into Anypoint Studio you need to fo
 
 
 ### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
+Complete all properties in one of the property files, for example in [mule.prod.properties] (../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
 
 
 ## Running on CloudHub <a name="runoncloudhub"/>
@@ -173,6 +175,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 + poll.frequency `60000`
 + watermark.default.expression.sfdc `#[System.currentTimeMillis() - 1000 * 60 * 60 * 24]`
 + watermark.default.expression.sieb `#[System.currentTimeMillis() - 1000 * 60 * 60 * 24]`
++ account.sync.policy `syncAccount`
 
 #### Oracle Siebel Business Objects Connector configuration
 + sieb.user `SADMIN`
@@ -226,9 +229,9 @@ In the visual editor they can be found on the *Global Element* tab.
 Functional aspect of the Anypoint Template is implemented on this XML, directed by a batch job that will be responsible for creations/updates. The severeal message processors constitute four high level actions that fully implement the logic of this Anypoint Template:
 
 1. Job execution is invoked from triggerFlow (endpoints.xml) everytime there is a new query executed asking for created/updated Contacts.
-2. During the Process stage, each Salesforce contact will be filtered depending on, if it has an existing matching contact in the Siebel and vise versa.
+2. During the Process stage, each Salesforce contact will be filtered depending on, if it has an existing matching contact in the Siebel and vise versa. In next batch steps associated account is looked up or created.
 3. The last step of the Process stage will group the contacts and create/update them either in Salesforce or Siebel.
-Finally during the On Complete stage the Anypoint Template will logoutput statistics data into the console.
+Finally during the On Complete stage the Anypoint Template will log output statistics data into the console.
 
 
 
@@ -238,7 +241,8 @@ This is file is conformed by a Flow containing the Poll that will periodically q
 
 
 ## errorHandling.xml<a name="errorhandlingxml"/>
-Contains a [Catch Exception Strategy](http://www.mulesoft.org/documentation/display/current/Catch+Exception+Strategy) that is only Logging the exception thrown (If so). As you imagine, this is the right place to handle how your integration will react depending on the different exceptions.
+This is the right place to handle how your integration will react depending on the different exceptions. 
+This file holds a [Choice Exception Strategy](http://www.mulesoft.org/documentation/display/current/Choice+Exception+Strategy) that is referenced by the main flow in the business logic.
 
 
 
