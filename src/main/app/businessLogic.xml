@@ -83,9 +83,6 @@ list.add(payload);
                     </otherwise>
                 </choice>
             </batch:step>
-            <batch:step name="setDummyAccountIdStep" accept-expression="'assignDummyAccount' == '${account.sync.policy}'">
-                <expression-component doc:name="set contact's parent account id"><![CDATA[payload['AccountId']= '${account.id.in.sieb}';]]></expression-component>
-            </batch:step>
             <batch:step name="DataTransformationStep">
                 <data-mapper:transform doc:name="transform Salesforce contact to Siebel contact" config-ref="DataMapper"/>
             </batch:step>
@@ -141,9 +138,6 @@ if (recordVars['salesforceContact'] instanceof NullPayload){
   else {  
   	payload.put('Id', recordVars['salesforceContact']['Id']);  
   }]]></expression-component>
-            </batch:step>
-            <batch:step name="setDummyAccountIdStepForSalesforce" accept-expression="'assignDummyAccount' == '${account.sync.policy}'">
-                <expression-component doc:name="set contact's parent account id"><![CDATA[payload['AccountId']= '${account.id.in.sfdc}';]]></expression-component>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" accept-expression="recordVars['salesforceContact'] is NullPayload || org.mule.templates.date.DateUtils.stringToDateTimeWithProvidedOffset(payload['Last Update - SDQ'], 'MM/dd/yyyy HH:mm:ss', '${sieb.timeOffset}').isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(recordVars['salesforceContact']['LastModifiedDate'])) &amp;&amp; '${sieb.integration.user.id}' != payload['Updated By']">
                 <data-mapper:transform doc:name="transform Siebel contact to Salesforce contact" config-ref="SiebelSalesforce"/>

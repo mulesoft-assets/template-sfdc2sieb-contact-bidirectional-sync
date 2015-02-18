@@ -32,7 +32,7 @@ This Template should serve as a foundation for setting an online bi-directional 
 
 The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured either in Salesforces or Siebel during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
 
-The integration also migrate associated accounts the the destination system as well. Account synchronization policy must be either `syncAccount` or `assignDummyAccount`. When (dummy) account is configured to be used, all migrated contacts are associated with it.
+The integration also migrate associated accounts to the destination system as well. Account synchronization policy must be `syncAccount`.
 
 Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
 
@@ -236,7 +236,7 @@ Finally during the On Complete stage the Anypoint Template will log output stati
 
 
 ## endpoints.xml<a name="endpointsxml"/>
-This is file is conformed by a Flow containing the Poll that will periodically query either in Salesforce or Siebel for updated/created Contacts that meet the defined criteria in the query. And then executing the batch job process with the query results.
+This file is conformed by a Flow containing the Poll that will periodically query either in Salesforce or Siebel for updated/created Contacts that meet the defined criteria in the query. And then executing the batch job process with the query results.
 
 
 
