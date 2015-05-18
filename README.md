@@ -121,6 +121,10 @@ In order to make the siebel connector work smoothly you have to provide the corr
 
 
 
+
+
+
+
 # Run it! <a name="runit"/>
 Simple steps to get Salesforce to Siebel Contact Bidirectional Sync running.
 
@@ -173,7 +177,7 @@ Mule Studio provides you with really easy way to deploy your Template directly t
 In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
 + poll.frequency `60000`
-+ watermark.default.expression.sfdc `#[System.currentTimeMillis() - 1000 * 60 * 60 * 24]`
++ watermark.default.expression.sfdc `#[groovy: new Date(System.currentTimeMillis() - 10000).format(\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\", TimeZone.getTimeZone('UTC'))]`
 + watermark.default.expression.sieb `#[System.currentTimeMillis() - 1000 * 60 * 60 * 24]`
 + account.sync.policy `syncAccount`
 
@@ -191,7 +195,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 + sfdc.username `bob.dylan@org`
 + sfdc.password `DylanPassword123`
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
-+ sfdc.url `https://login.salesforce.com/services/Soap/u/28.0`
++ sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.integration.user.id= `A0ed000BO9T`
 
 # API Calls <a name="apicalls"/>
