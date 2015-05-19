@@ -88,8 +88,8 @@ list.add(payload);
             </batch:step>
             <batch:step name="createContactsInSiebelStep" accept-expression="!(payload is NullPayload) ||  recordVars['siebelContact'] is NullPayload || !org.mule.templates.date.DateUtils.stringToDateTimeWithProvidedOffset(recordVars['siebelContact']['Last Update - SDQ'], 'MM/dd/yyyy HH:mm:ss', '${sieb.timeOffset}').isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload['LastModifiedDate'])) &amp;&amp; '${sfdc.integration.user.id}' != payload['LastModifiedById']">
 		        <logger message="Contacts to upsert: #[payload]" level="INFO" doc:name="log contacts to upsert"/>
-		        <siebel:create-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" doc:name="upsert contacts in Siebel">
-		        </siebel:create-business-component>
+		        <siebel:upsert-business-component config-ref="OracleSiebelBusinessObjects" businessObjectComponentType="Contact.Contact" doc:name="upsert contacts in Siebel">
+		        </siebel:upsert-business-component>
             </batch:step>
         </batch:process-records>
         <batch:on-complete>
@@ -155,12 +155,12 @@ if (recordVars['salesforceContact'] instanceof NullPayload){
         </batch:on-complete>
     </batch:job>
 
-    <flow name="mainFlowToSiebel" doc:name="mainFlowToSiebel">
+    <flow name="mainFlowToSiebel" >
         <batch:execute name="migrateContactsToSiebelBatch" doc:name="trigger migrateContactsToSiebelBatch"/>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultExceptionStrategy"/>
     </flow>
 
-    <flow name="mainFlowToSalesforce" doc:name="mainFlowToSalesforce">
+    <flow name="mainFlowToSalesforce" >
         <batch:execute name="migrateContactsToSalesforceBatch" doc:name="trigger migrateContactsToSalesforceBatch"/>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultExceptionStrategy"/>
     </flow>
