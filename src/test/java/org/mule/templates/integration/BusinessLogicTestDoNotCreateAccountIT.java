@@ -167,9 +167,7 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplateTestC
         contactsCreatedInSalesforce.add(createTestContactsInSfdcSandbox(salesforceContact, createContactInSalesforceFlow));
 
         // Execution
-        logger.info("TEST--------------------------before main flow execution");
         executeWaitAndAssertBatchJob(SALESFORCE_INBOUND_FLOW_NAME);
-        logger.info("TEST--------------------------after main flow execution");
 
         Map<String, String> retrievedContactFromSiebel = (Map<String, String>) querySiebelContact(salesforceContact, queryContactFromSiebelFlow);
         Assert.assertEquals("Some contacts are not synchronized between systems.", salesforceContact.get("Email"), retrievedContactFromSiebel.get("Email Address"));

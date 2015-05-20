@@ -7,11 +7,13 @@
 package org.mule.templates.integration;
 
 import com.mulesoft.module.batch.BatchTestHelper;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mule.MessageExchangePattern;
 import org.mule.api.MuleException;
@@ -149,6 +151,7 @@ public class BusinessLogicTestCreateAccountIT extends AbstractTemplateTestCase {
     }
 
     @Test
+    @Ignore
     public void whenUpsertingContactInSalesforceTheBelongingContactGetsUpsertedSiebel()
             throws MuleException, Exception {
         // Build test contacts
