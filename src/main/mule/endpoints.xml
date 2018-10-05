@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:siebel="http://www.mulesoft.org/schema/mule/siebel" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+    xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/siebel/current/mule-siebel.xsd">
+
+    <flow name="schedulerFlow" doc:id="dba94e27-e40f-44a5-8503-15080440a754">
+        <scheduler doc:name="Scheduler" doc:id="35723d3b-cf88-476f-9199-7dc519febdc3">
+            <scheduling-strategy>
+                <fixed-frequency frequency="${scheduler.frequency}" startDelay="${scheduler.start.delay}" />
+            </scheduling-strategy>
+        </scheduler>
+        <os:retrieve doc:name="Retrieve sync state" doc:id="b4962075-2515-4eea-85c1-44632ac6bf6f" key="syncState"
+            target="syncState" objectStore="SchedulerStatus">
+            <os:default-value><![CDATA[fromSalesforce]]></os:default-value>
+        </os:retrieve>
+        <choice doc:name="SyncState?" doc:id="dcf99368-0665-4305-9a06-e8906957db53">
+            <when expression="#[(vars.syncState != 'running' and vars.syncState == 'fromSalesforce') or vars.syncState == null]">
+                <logger level="INFO" doc:name="running from Salesforce" doc:id="ae9ade0a-3b7f-4af7-b75c-2357c5dc8a8d"
+                    message="running from Salesforce" />
+                <os:store doc:name="Set sync state to running" doc:id="3106f341-1fa8-4b45-a53c-4f1e14beb062" key="syncState"
+                    objectStore="SchedulerStatus">
+                    <os:value><![CDATA[running]]></os:value>
+                </os:store>
+                <flow-ref doc:name="queryFlowSalesforce" doc:id="a30245e9-cc9e-4325-b12e-e5c43e38ea99" name="queryFlowSalesforce" />
+                <flow-ref doc:name="fromSalesforceToSiebel" doc:id="80560707-9be6-45f8-b323-711152d6c629" name="fromSalesforceToSiebel" />
+            </when>
+            <when expression="#[vars.syncState != 'running' and vars.syncState == 'fromSiebel']">
+                <logger level="INFO" doc:name="running from Siebel" doc:id="473d237e-8ef1-4676-8e69-5aaa6d28c161" message="running from Siebel" />
+                <os:store doc:name="Set sync state to running" doc:id="6600380d-8e0e-4c07-895b-d62b962e7be2" key="syncState"
+                    objectStore="SchedulerStatus">
+                    <os:value><![CDATA[running]]></os:value>
+                </os:store>
+                <flow-ref doc:name="queryFlowSiebel" doc:id="0a7d8b06-2809-457d-b372-73c7f89e82f1" name="queryFlowSiebel" />
+                <flow-ref doc:name="fromSiebelToSalesforce" doc:id="daeff67d-4121-4519-95f2-d890eb7a0b81" name="fromSiebelToSalesforce" />
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Batch running" doc:id="b37055ae-c699-4c52-8b0a-2feacde8007f" message="Batch running" />
+            </otherwise>
+        </choice>
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate"
+                doc:id="0aab39f6-d981-45de-8df7-76f34c2add77">
+                <flow-ref doc:name="errorHandlingFlow" doc:id="4f67b4e8-80ac-47a9-887e-206d1dc2b117" name="errorHandlingFlow" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="queryFlowSalesforce">
+        <os:retrieve doc:name="Retrieve lastQueryDateSalesforce" doc:id="ef652a21-7529-4c4b-a00e-829d881fa171" key="watermark"
+            target="lastQueryDateSalesforce" objectStore="watermarkStoreSalesforce">
+            <os:default-value><![CDATA[${watermark.default.expression.sfdc}]]></os:default-value>
+        </os:retrieve>
+        <salesforce:query doc:name="Query contacts from Salesforce with filtering criteria" doc:id="048fe7ee-c084-448b-be4e-1de61c6cc956"
+            config-ref="Salesforce_Config">
+            <salesforce:salesforce-query>SELECT Email, FirstName, LastName, Id, LastModifiedDate, LastModifiedById, MailingCity,
+                MailingState, MailingCountry, MailingPostalCode, Title, Account.Id, Account.Name, Account.AccountNumber,
+                Account.AccountSource, Account.AnnualRevenue, Account.BillingCity, Account.BillingCountry,
+                Account.BillingPostalCode, Account.BillingState, Account.BillingStreet, Account.Description, Account.Fax,
+                Account.Industry, Account.NumberOfEmployees, Account.Ownership, Account.ParentId, Account.Phone, Account.Rating,
+                Account.ShippingCity, Account.ShippingCountry, Account.ShippingPostalCode, Account.ShippingState,
+                Account.ShippingStreet, Account.Sic, Account.SicDesc, Account.Site, Account.TickerSymbol, Account.Type,
+                Account.Website FROM Contact WHERE LastModifiedDate &gt; :salesforceLastQueryDate AND Email != null
+            </salesforce:salesforce-query>
+            <salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"salesforceLastQueryDate" : vars.lastQueryDateSalesforce
+}]]]></salesforce:parameters>
+        </salesforce:query>
+        <os:store doc:name="Store lastQueryDateSalesforce" doc:id="03c188d5-c37f-4438-9cb0-f86615c911a6" key="watermark"
+            failOnNullValue="false" objectStore="watermarkStoreSalesforce">
+            <os:value><![CDATA[#[max(payload map $.LastModifiedDate)]]]></os:value>
+        </os:store>
+    </flow>
+    <flow name="queryFlowSiebel">
+        <os:retrieve doc:name="Retrieve lastQueryDateSiebel" doc:id="f07ed3f6-b6f0-4adf-ac24-2bc8205e1805" key="watermark"
+            target="lastQueryDateSiebel" objectStore="watermarkStoreSiebel">
+            <os:default-value><![CDATA[#[p('watermark.default.expression.sieb') as DateTime as String {format: "MM/dd/yy HH:mm:ss"}]]]></os:default-value>
+        </os:retrieve>
+        <ee:transform doc:name="Set Query for Siebel" doc:id="1f7f0d3a-83d8-4a49-aa07-5d8573341dc7">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"fields" : 
+	[
+		"Id", "Email Address", 
+		"First Name", "Last Name", 
+		"Account", "Last Update - SDQ", 
+		"Updated By"
+	],
+	searchExpression : "[Last Update - SDQ] > '" ++ vars.lastQueryDateSiebel as String ++ "'"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <siebel:query-business-components businessObjectComponentType="Contact.Contact"
+            doc:name="Query contacts from siebel" doc:id="e44a86f8-5de8-4418-b1e5-2f2eb7f56525" config-ref="Siebel_JDB_Siebel" />
+        <os:store doc:name="Store lastQueryDateSiebel" doc:id="f94c7ca1-79d4-4655-8b59-2bb349b8a1ac" key="watermark"
+            failOnNullValue="false" objectStore="watermarkStoreSiebel">
+            <os:value><![CDATA[#[max(payload map  $."Last Update - SDQ")]]]></os:value>
+        </os:store>
+    </flow>
+</mule>
+
+        

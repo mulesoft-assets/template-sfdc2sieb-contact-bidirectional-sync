@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+    xmlns:siebel="http://www.mulesoft.org/schema/mule/siebel" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+    xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/siebel/current/mule-siebel.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+    <flow name="fromSalesforceToSiebel" doc:id="8cc8a4c5-2fe5-4036-bfc5-2a6b64b2d2a1">
+        <batch:job jobName="fromSalesforcetoSiebelBatch" doc:id="84743395-5927-46bf-90e2-c4a13892ccfb">
+            <batch:process-records>
+                <batch:step name="getContactFromSiebelStep" doc:id="1614bfd7-acec-4441-888c-7b3aa933b6ab">
+                    <ee:transform doc:name="Set query for Siebel" doc:id="fad368d3-1624-43af-af30-efe11e7d6267">
+                        <ee:message>
+                        </ee:message>
+                        <ee:variables>
+                            <ee:set-variable variableName="query"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"fields": ["Id", "Email Address", "Last Update - SDQ"],
+	"searchExpression": "[Email Address] = '" ++ payload.Email ++ "'"
+}]]></ee:set-variable>
+                        </ee:variables>
+                    </ee:transform>
+                    <siebel:query-business-components businessObjectComponentType="Contact.Contact"
+                        doc:name="Get Contacts from Siebel" doc:id="a8360c3a-a75f-4edb-b1a9-af116a9ba347" config-ref="Siebel_JDB_Siebel"
+                        target="siebelContact">
+                        <siebel:query-definition><![CDATA[#[vars.query]]]></siebel:query-definition>
+                    </siebel:query-business-components>
+                    <ee:transform doc:name="Set SiebelContact" doc:id="574d4efa-db5e-458f-bdb4-c457ce186882">
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {
+	("siebelContact" : vars.siebelContact[0]) if(not isEmpty(vars.siebelContact))
+}
+]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </batch:step>
+                <batch:step name="findOrCreateAccountInSiebelStep" doc:id="7102e3de-15c0-4999-8c5e-7e938bc1f2b5"
+                    acceptExpression="'syncAccount' == '${account.sync.policy}'">
+                    <choice doc:name="payload.Account != null ?" doc:id="e7fdd7ec-5204-4b47-b5c4-df6525a30311">
+                        <when expression="#[payload.Account != null]">
+                            <ee:transform doc:name="Prepare Siebel query" doc:id="b09f4b5c-2039-454d-9d81-a65325b9ace9">
+                                <ee:message>
+                                </ee:message>
+                                <ee:variables>
+                                    <ee:set-variable variableName="queryAccounts"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"fields" : ["Id", "Name", "Email Address", "Last Update - SDQ"],
+	"searchSpec": {
+		"Name": payload.Account.Name,
+	}
+}]]></ee:set-variable>
+                                </ee:variables>
+                            </ee:transform>
+                            <siebel:query-business-components businessObjectComponentType="Account.Account"
+                                doc:name="Query Accounts from Siebel" doc:id="18a54ea7-7252-4869-a800-688fdafc3900" config-ref="Siebel_JDB_Siebel"
+                                target="siebelAccount">
+                                <siebel:query-definition><![CDATA[#[vars.queryAccounts]]]></siebel:query-definition>
+                            </siebel:query-business-components>
+                            <choice doc:name="vars.siebelAccount == null ?" doc:id="5315e00c-7298-405e-88c1-877e09be2e62">
+                                <when expression="#[isEmpty(vars.siebelAccount)]">
+                                    <ee:transform doc:name="Set siebelCreateQuery variable" doc:id="948813a2-9636-41f2-9fae-286ab40f9d2b">
+                                        <ee:message>
+                                        </ee:message>
+                                        <ee:variables>
+                                            <ee:set-variable variableName="siebelCreateQuery"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Name" 			 : payload.Account.Name,
+	"Employees"		 :
+	if (payload.Account.NumberOfEmployees == null)
+		"0"
+	else
+		payload.Account.NumberOfEmployees as String,
+	"City" 			 : payload.Account.BillingCity,
+	"Street Address" : payload.Account.BillingStreet
+}]]></ee:set-variable>
+                                        </ee:variables>
+                                    </ee:transform>
+                                    <siebel:create-business-component
+                                        businessObjectComponentType="Account.Account" doc:name="Create account in Siebel"
+                                        doc:id="f990fa7e-14af-4fae-90b1-e1e1593073ef" config-ref="Siebel_JDB_Siebel" target="siebelAccountId">
+                                        <siebel:business-component-fields>
+                                            <![CDATA[#[vars.siebelCreateQuery]]]></siebel:business-component-fields>
+                                    </siebel:create-business-component>
+                                    <ee:transform doc:name="Add siebelAccountId to payload" doc:id="2cd01ccc-d3d0-4793-9ffc-8aaba1a6f1ab">
+                                        <ee:message>
+                                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {
+	"siebelAccountId"  : vars.siebelAccountId,
+	"siebelAccountName": payload.Account.Name
+}]]></ee:set-payload>
+                                        </ee:message>
+                                    </ee:transform>
+                                </when>
+                                <otherwise>
+                                    <ee:transform doc:name="Add siebelAccountId to payload" doc:id="176ed69c-3bdd-458b-88a0-3ca7dfbff555">
+                                        <ee:message>
+                                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {
+	"siebelAccountId": vars.siebelAccount[0].Id,
+	"siebelAccounName": vars.siebelAccount[0].Name
+}]]></ee:set-payload>
+                                        </ee:message>
+                                        <ee:variables>
+                                        </ee:variables>
+                                    </ee:transform>
+                                </otherwise>
+                            </choice>
+                        </when>
+                        <otherwise>
+                            <logger level="INFO" doc:name="Log 'There is no Account assigned to this contact'" doc:id="678f62ca-e67b-4dd6-bcf9-3a313bced14d"
+                                message="There is no Account assigned to this contact. Doing nothing" />
+                        </otherwise>
+                    </choice>
+                </batch:step>
+                <batch:step name="createContactsInSiebelStep" doc:id="8d564201-3b8f-4b25-a3bc-b6f022e93411" acceptExpression='payload.siebelContact == null or (payload.siebelContact["Last Update - SDQ"] &lt; payload.LastModifiedDate)'>
+                    <ee:transform doc:name="Prepare Siebel query" doc:id="ef87dcd2-3d6e-4360-8bfa-ae34216c9b03">
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Email Address" : payload.Email,
+	"First Name" 	: payload.FirstName,
+	"Last Name" 	: payload.LastName,
+	 ("Id" : payload.siebelContact.Id) if sizeOf(payload.siebelContact)>0,
+	 ("Account":  payload.siebelAccount.Name) 
+	 if((not isEmpty(payload.Account)) and payload.Account.Name != payload.siebelAccountName)
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                    <logger level="INFO" doc:name="Log contacts to upsert" doc:id="1ff606fa-2353-481f-9b96-235404949589"
+                        message="Contacts to upsert : #[output application/json --- payload]" />
+                    <siebel:upsert-business-component businessObjectComponentType="Contact.Contact"
+                        doc:name="Upsert contact" doc:id="6029675a-ea62-4a82-9da2-b968eb689988" config-ref="Siebel_JDB_Siebel" />
+                    <logger level="INFO" doc:name="Log result" doc:id="98d40c27-af30-4152-b19c-7b18ca3196e7"
+                        message="Upsert result: #[output application/json --- payload]" />
+                </batch:step>
+            </batch:process-records>
+            <batch:on-complete>
+                <os:store doc:name="Set syncState to 'fromSiebel'" doc:id="af541cc3-f5b3-4bb6-a38f-e9e35088ae7a" key="syncState"
+                    objectStore="SchedulerStatus">
+                    <os:value><![CDATA[fromSiebel]]></os:value>
+                </os:store>
+            </batch:on-complete>
+        </batch:job>
+    </flow>
+	<flow name="fromSiebelToSalesforce" doc:id="2df888d8-96fd-4b28-8d6f-a26512367228">
+        <batch:job jobName="getContactInSalesforceStep" doc:id="74a8e0df-c9df-41f4-9f71-58d4bc312193">
+            <batch:process-records>
+                <batch:step name="getContactFromSalesforceStep" doc:id="8eac8771-d6e2-40be-b4a6-d3a769ea4e5e">
+                    <salesforce:query-single doc:name="Query Salesforce for existing Contact" doc:id="955af715-ef13-4e6d-97df-467f5b0e174a" config-ref="Salesforce_Config" target="sfdcContact">
+                        <salesforce:salesforce-query>SELECT Id, LastModifiedDate FROM Contact WHERE Email = ':email'
+                        </salesforce:salesforce-query>
+                        <salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	email : payload."Email Address"
+}]]]></salesforce:parameters>
+                    </salesforce:query-single>
+                    <ee:transform doc:name="Set contact id" doc:id="0db679fc-2825-4588-9ac9-f9ad40dfd1f0">
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {
+	(sfdcContact: vars.sfdcContact) if(vars.sfdcContact != null)
+}]]></ee:set-payload>
+                        </ee:message>
+                        <ee:variables>
+                        </ee:variables>
+                    </ee:transform>
+                </batch:step>
+                <batch:step name="findOrCreateAccountInSalesforceStep" doc:id="616e8150-4edc-4bbf-92d2-b177107351b2" acceptExpression="not isEmpty(payload.Account)">
+                    <salesforce:query-single doc:name="Query account from salesforce filtering with siebel account name" doc:id="77cc3d4d-5749-43b0-81a3-1405c670d97d" config-ref="Salesforce_Config" target="sfdcAccount">
+                        <salesforce:salesforce-query>SELECT Id,Name from Account where Name = ':account'
+                        </salesforce:salesforce-query>
+                        <salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	account : payload.Account
+}]]]></salesforce:parameters>
+                    </salesforce:query-single>
+                    <choice doc:name=" sizeOf(vars.sfdcAccount)==0 ?" doc:id="9405a13f-63f9-4830-9d3f-eb31dec6ce67">
+                        <when expression="sizeOf(vars.sfdcAccount)==0">
+                            <ee:transform doc:name="Set Salesforce query" doc:id="a1bb0731-bc76-4418-8f51-2751268f61a2">
+                                <ee:message>
+                                </ee:message>
+                                <ee:variables>
+                                    <ee:set-variable variableName="sfdcAccount"><![CDATA[%dw 2.0
+output application/java
+---
+{
+  "Name" : payload.Account
+}]]></ee:set-variable>
+                                </ee:variables>
+                            </ee:transform>
+                            <salesforce:create-single type="Account" doc:name="Create account in Salesforce" doc:id="95ee71d0-32b7-4523-b092-e327b4b507ae" config-ref="Salesforce_Config" target="accountId" targetValue="#[payload.Id]">
+                                <salesforce:record><![CDATA[#[vars.sfdcAccount]]]></salesforce:record>
+                            </salesforce:create-single>
+                        </when>
+                        <otherwise>
+                            <ee:transform doc:name="Set accountId variable" doc:id="bef13652-49b7-4412-ad6c-20a393845e51">
+                                <ee:message>
+                                </ee:message>
+                                <ee:variables>
+                                    <ee:set-variable variableName="accountId"><![CDATA[%dw 2.0
+output application/java
+---
+vars.sfdcAccount.Id]]></ee:set-variable>
+                                </ee:variables>
+                            </ee:transform>
+                        </otherwise>
+                    </choice>
+                </batch:step>
+                <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" doc:id="e2bcc4c5-9ce2-415e-9209-b823a74e8342" acceptExpression='payload.sfdcContact == null or (payload.sfdcContact.LastModifiedDate &lt; payload["Last Update - SDQ"])'>
+                    <ee:transform doc:name="Set Salesforce query" doc:id="bf644b88-3fca-40a6-a984-56dbb08601f6">
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	(Id: vars.sfdcContact.id) if(vars.sfdcContact != null),
+	AccountId: vars.accountId,
+	Email : payload."Email Address",
+	FirstName : payload."First Name",
+	LastName : payload."Last Name"
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                    <batch:aggregator doc:name="Batch Aggregator" doc:id="d7a3bf53-d044-4716-ba9c-622d982eaa4b" size="${page.size}">
+                        <logger level="INFO" doc:name="Log contacts for upsert" doc:id="b876bab0-f211-48d0-b72a-05ceb2c87065" message="Contacts to upsert : #[output application/json --- payload]" />
+                        <salesforce:upsert type="Contact" doc:name="Upsert contact to Salesforce" doc:id="e44d3b16-ae67-456a-ab4b-4ce1dd10830a" config-ref="Salesforce_Config" externalIdFieldName="Id" />
+                        <logger level="INFO" doc:name="Log result" doc:id="501f5ad1-dda1-4682-ba5a-14cffe665c1c" message="Upsert result: #[output application/json --- payload]" />
+                    </batch:aggregator>
+                </batch:step>
+            </batch:process-records>
+            <batch:on-complete>
+                <os:store doc:name="Set syncState to 'fromSalesforce'" doc:id="5c966388-46db-4c08-b901-85621183176d" key="syncState">
+                    <os:value><![CDATA[fromSalesforce]]></os:value>
+                </os:store>
+            </batch:on-complete>
+        </batch:job>
+
+    </flow>
+
+</mule>
