@@ -23,7 +23,7 @@
                     <sharedLibraries>
                         <!-- Please Add shared Siebel libraries -->
                     </sharedLibraries>
-                    <classifier>mule-application</classifier>
+                    <classifier>mule-application-template</classifier>
                 </configuration>
             </plugin>
             <plugin>
