@@ -130,7 +130,7 @@ payload ++ {
                     </choice>
                 </batch:step>
                 <batch:step name="createContactsInSiebelStep" doc:id="8d564201-3b8f-4b25-a3bc-b6f022e93411" acceptExpression='payload.siebelContact == null or (payload.siebelContact["Last Update - SDQ"] &lt; payload.LastModifiedDate)'>
-                    <ee:transform doc:name="Prepare Siebel query" doc:id="ef87dcd2-3d6e-4360-8bfa-ae34216c9b03">
+					<ee:transform doc:name="Prepare Siebel query" doc:id="ef87dcd2-3d6e-4360-8bfa-ae34216c9b03">
                         <ee:message>
                             <ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -139,7 +139,7 @@ output application/java
 	"Email Address" : payload.Email,
 	"First Name" 	: payload.FirstName,
 	"Last Name" 	: payload.LastName,
-	 ("Id" : payload.siebelContact.Id) if sizeOf(payload.siebelContact)>0,
+	 ("Id" : payload.siebelContact.Id) if (not isEmpty( payload.siebelContact)),
 	 ("Account":  payload.siebelAccount.Name) 
 	 if((not isEmpty(payload.Account)) and payload.Account.Name != payload.siebelAccountName)
 }]]></ee:set-payload>
@@ -212,7 +212,7 @@ output application/java
                                 </ee:variables>
                             </ee:transform>
                             <salesforce:create-single type="Account" doc:name="Create account in Salesforce" doc:id="95ee71d0-32b7-4523-b092-e327b4b507ae" config-ref="Salesforce_Config" target="accountId" targetValue="#[payload.Id]">
-                                <salesforce:record><![CDATA[#[vars.sfdcAccount]]]></salesforce:record>
+								<salesforce:record ><![CDATA[#[vars.sfdcAccount]]]></salesforce:record>
                             </salesforce:create-single>
                         </when>
                         <otherwise>
@@ -229,14 +229,14 @@ vars.sfdcAccount.Id]]></ee:set-variable>
                         </otherwise>
                     </choice>
                 </batch:step>
-                <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" doc:id="e2bcc4c5-9ce2-415e-9209-b823a74e8342" acceptExpression='payload.sfdcContact == null or (payload.sfdcContact.LastModifiedDate &lt; payload["Last Update - SDQ"])'>
+                <batch:step name="forEachContactThatShouldBeUpsertedInSalesforce" doc:id="e2bcc4c5-9ce2-415e-9209-b823a74e8342" acceptExpression='isEmpty(vars.sfdcContact) or (payload.sfdcContact.LastModifiedDate &lt; payload["Last Update - SDQ"])'>
                     <ee:transform doc:name="Set Salesforce query" doc:id="bf644b88-3fca-40a6-a984-56dbb08601f6">
                         <ee:message>
                             <ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 {
-	(Id: vars.sfdcContact.id) if(vars.sfdcContact != null),
+	(Id: vars.sfdcContact.id) if(not isEmpty(vars.sfdcContact)),
 	AccountId: vars.accountId,
 	Email : payload."Email Address",
 	FirstName : payload."First Name",
