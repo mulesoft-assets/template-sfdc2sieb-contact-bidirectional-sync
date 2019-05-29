@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<configuration>
+	<placeholders>
+		<placeholder id="template_name">Salesforce to Siebel Contact Bidirectional Sync</placeholder>
+	</placeholders>
+	<sections>
+		<section id="use_case">
+			<![CDATA[
+As a Salesforce administrator I want to have my Contacts synchronized between Salesforce and Oracle Siebel Business Objects.
+
+This template serves as a foundation for setting an online bidirectional sync of contacts between Salesforce and Oracle Siebel Business Objects, being able to specify filtering criteria. 
+
+The integration is triggered by a scheduler defined in the flow. It is getting changes (new Contacts or modified ones) that have occurred either in Salesforces or Siebel during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+
+The integration also migrates associated accounts to the destination system as well. Account synchronization policy must be `syncAccount`.
+
+Requirements have been set not only to be used as examples, but also to establish starting points 
+to adapt the integration to any given requirements.
+
+]]>
+		</section>
+		<section id="considerations">
+		<![CDATA[
+To make this Anypoint Template run, there are certain preconditions that must be considered. All of them deal with the preparations in both, that must be made in order for all to run smoothly. **Failing to do so could lead to unexpected behavior of the template.**
+]]>
+		</section>
+		<section id="sieb_dst">
+		<![CDATA[
+In order to make the Siebel connector work smoothly you have to provide the correct version of the Siebel jars that works with your Siebel installation. [See more](https://docs.mulesoft.com/connectors/siebel-connector#prerequisites).
+]]>
+		</section>
+		<section id="application_configuration">
+			<![CDATA[
++ page.size `200`            
++ scheduler.frequency `60000`
++ scheduler.start.delay `1000`
++ watermark.default.expression.sfdc `2018-10-01T03:00:59Z`
++ watermark.default.expression.sieb `2018-10-01T03:00:59Z`
++ account.sync.policy `syncAccount`
+
+**Salesforce Connector configuration**
++ sfdc.username `bob.dylan@org`
++ sfdc.password `DylanPassword123`
++ sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
+
+**Oracle Siebel Business Objects Connector configuration**
++ sieb.user `SADMIN`
++ sieb.password `SADMIN`
++ sieb.server `your_server`
++ sieb.serverName `your_server_name`
++ sieb.objectManager `your_object_manager`
++ sieb.port `your_port`
+]]>
+		</section>
+		<section id="api_calls">
+			<![CDATA[
+Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:
+
+***1 + X + X / ${page.size}***
+
+Being ***X*** the number of Contacts to be synchronized on each run. 
+
+The division by ***${page.size}*** is because, by default, Contacts are gathered in groups of ${page.size} for each Upsert API Call in the aggregation step. Also consider that these calls are executed repeatedly every polling cycle.	
+
+For instance if 10 records are fetched from origin instance, then 12 api calls will be made (1 + 10 + 1).
+]]>
+		</section>
+		<section id="default_endpoints_xml">
+		<![CDATA[
+This file is conformed by a Flow containing the Scheduler that will periodically query either in Salesforce or Siebel for updated/created Contacts that meet the defined criteria in the query. And then executing the batch job process with the query results.
+]]>
+		</section>
+		<section id="default_business_logic_xml">
+		<![CDATA[
+This file holds the functional aspect of the template. Its main component is a Mule batch job, and 
+it includes steps for both executing the synchronization from Salesforce to Oracle Siebel Business Objects, and the other way around.
+]]>
+		</section>
+	</sections>
+</configuration>
