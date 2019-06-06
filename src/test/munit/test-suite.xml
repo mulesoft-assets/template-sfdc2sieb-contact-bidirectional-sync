@@ -28,10 +28,10 @@ http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/s
 output application/java
 var id= randomInt(1000)
 ---
-{	
+{
 	FirstName: "TestRecord" ++ id,
 	LastName: "LastName" ++ id,
-    Email: "email" ++ id ++ "@gmail.com", 
+    Email: "email" ++ id ++ "@gmail.com",
     Department: "testDepartment",
     HomePhone: "+421999555"
 }
@@ -53,10 +53,10 @@ var id= randomInt(1000)
 output application/java
 var id= randomInt(1000)
 ---
-{		
+{
 	FirstName: "TestRecord" ++ id,
 	LastName: "LastName" ++ id,
-    Email: "email" ++ id ++ "@gmail.com", 
+    Email: "email" ++ id ++ "@gmail.com",
     Department: "testDepartment",
     HomePhone: "+421999555"
 }
@@ -65,10 +65,10 @@ var id= randomInt(1000)
 output application/java
 var id= randomInt(1000)
 ---
-{	
+{
 	FirstName: "TestRecord" ++ id,
 	LastName: "LastName" ++ id,
-    Email: "email" ++ id ++ "@gmail.com", 
+    Email: "email" ++ id ++ "@gmail.com",
     Department: "testDepartment",
     HomePhone: "+421999555"
 }]]></ee:set-variable>
@@ -78,8 +78,8 @@ var id= randomInt(1000)
 			doc:id="0bd4b390-1e62-43ec-a48c-fc2d099a9a86" config-ref="Salesforce_Config"
 			type="Contact" >
 			<salesforce:records ><![CDATA[#[[  vars.testInterpreter1,vars.testInterpreter2,
-	
-	{		
+
+	{
 		FirstName: vars.testInterpreter3.FirstName,
 		LastName: vars.testInterpreter3.LastName,
 	    Email: "",
@@ -96,12 +96,12 @@ var id= randomInt(1000)
 			<siebel:business-component-fields ><![CDATA[#[{
 	"First Name": vars.testInterpreter2.FirstName,
     "Last Name": "SiebelLastName",
-    "Email Address": vars.testInterpreter2.Email,    
+    "Email Address": vars.testInterpreter2.Email,
     "Department": vars.testInterpreter2.Department,
     "Home Phone #": vars.testInterpreter2.HomePhone,
     "Work Phone #": vars.testInterpreter2.Phone,
     "Cellular Phone #": vars.testInterpreter2.MobilePhone
-	
+
 }]]]></siebel:business-component-fields>
 		</siebel:upsert-business-component>
 		<set-variable value="#[payload.createdObjectId]"
@@ -111,12 +111,12 @@ var id= randomInt(1000)
 			<siebel:business-component-fields ><![CDATA[#[{
 	"First Name": vars.testInterpreter4.FirstName,
     "Last Name": vars.testInterpreter4.LastName,
-    "Email Address": vars.testInterpreter4.Email,    
+    "Email Address": vars.testInterpreter4.Email,
     "Department": vars.testInterpreter4.Department,
     "Home Phone #": vars.testInterpreter4.HomePhone,
     "Work Phone #": vars.testInterpreter4.Phone,
     "Cellular Phone #": vars.testInterpreter4.MobilePhone
-	
+
 }]]]></siebel:business-component-fields>
 		</siebel:upsert-business-component>
 		<set-variable value="#[payload.createdObjectId]" doc:name="Store ID to variable secondSiebelID" doc:id="c3e72f05-a8e5-4e6c-8f26-e726bd03edc8" variableName="secondSiebelID" />
@@ -131,8 +131,8 @@ var id= randomInt(1000)
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
 ---
-payload filter 
-($.FirstName == vars.testInterpreter1.FirstName or 
+payload filter
+($.FirstName == vars.testInterpreter1.FirstName or
 $.FirstName == vars.testInterpreter2.FirstName or
 $.FirstName == vars.testInterpreter3.FirstName )]]></ee:set-payload>
 				</ee:message>
@@ -148,8 +148,8 @@ $.FirstName == vars.testInterpreter3.FirstName )]]></ee:set-payload>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
-payload filter 
-($."First Name" == vars.testInterpreter1.FirstName or 
+payload filter
+($."First Name" == vars.testInterpreter1.FirstName or
 $."First Name" == vars.testInterpreter2.FirstName or
 $."First Name" == vars.testInterpreter3.FirstName or
 $."First Name" == vars.testInterpreter4.FirstName )]]></ee:set-payload>
@@ -163,7 +163,7 @@ $."First Name" == vars.testInterpreter4.FirstName )]]></ee:set-payload>
 				name="testRecord1" />
 			<flow-ref doc:name="Flow Reference testRecord2" doc:id="89ca7e58-3ee2-4ae9-8f22-9922cd7a5ee4"
 				name="testRecord2" />
-			<flow-ref doc:name="Flow Reference testRecord3" doc:id="f4004c89-4a00-43eb-9c32-3bdd4c6c91d3" 
+			<flow-ref doc:name="Flow Reference testRecord3" doc:id="f4004c89-4a00-43eb-9c32-3bdd4c6c91d3"
 				name="testRecord3"/>
 			<flow-ref doc:name="Flow Reference testRecord4" doc:id="02b96fb7-1fa9-4d99-9882-400cf4b503c4" name="testRecord4" />
 
@@ -171,14 +171,14 @@ $."First Name" == vars.testInterpreter4.FirstName )]]></ee:set-payload>
 		<munit:validation>
 			<munit-tools:assert-that doc:name="Assert test migrated testRecord1"
 				doc:id="fdd1795d-4692-4e8d-ba9f-35b5d3121186" expression="#[vars.resultTestRecord1]"
-				is="#[MunitTools::equalTo(1)]" />
+				is="#[MunitTools::equalTo(1)]" message="Assert test migrated testRecord1 has failed"/>
 			<munit-tools:assert-that doc:name="Assert test updated testRecord2"
 				doc:id="f28924c9-de58-408e-91cd-18eda57ea0ea" expression="#[vars.resultTestRecord2]"
-				is="#[MunitTools::equalTo(true)]" />
+				is="#[MunitTools::equalTo(true)]" message="Assert test updated testRecord2 has failed"/>
 			<munit-tools:assert-that doc:name="Assert test not migrated testRecord3"
 			doc:id="5407089e-7060-4952-902d-4f41746ed3f4" expression="#[vars.resultTestRecord3]"
-			is="#[MunitTools::equalTo(0)]" />
-			<munit-tools:assert-that doc:name="Assert test migrated testRecord4" doc:id="52f655e3-034b-4af7-8dbd-0511a1f738dc" expression="#[vars.resultTestRecord4]" is="#[MunitTools::equalTo(true)]" />
+			is="#[MunitTools::equalTo(0)]" message="Assert test not migrated testRecord3 has failed"/>
+			<munit-tools:assert-that doc:name="Assert test migrated testRecord4" doc:id="52f655e3-034b-4af7-8dbd-0511a1f738dc" expression="#[vars.resultTestRecord4]" is="#[MunitTools::equalTo(true)]" message="Assert test migrated testRecord4 has failed"/>
 		</munit:validation>
 	</munit:test>
 	<sub-flow name="testRecord1" doc:id="d56875b0-d885-4852-9475-4ca1d3596f0c">
@@ -274,7 +274,7 @@ output application/java
 			value='#[not isEmpty(payload.Id)]'
 			doc:name="Set result TestRecord4" doc:id="2b81e7d2-bf34-4dec-bfc3-406d17ca65e3" variableName="resultTestRecord4"/>
 	</sub-flow>
-	
+
 	<munit:after-test name="test-suiteAfter_Test"
 		description="After tests actions" doc:id="2505a93e-5897-4298-8980-5f0852930bc1">
 		<salesforce:delete doc:name="Delete source Contact in Salesforce"
@@ -291,5 +291,5 @@ output application/java
 			businessObjectComponentType="Contact.Contact" businessComponentId="#[vars.migratedSiebelID]"
 			config-ref="Siebel_JDB_Siebel" />
 	</munit:after-test>
-	
+
 </mule>
