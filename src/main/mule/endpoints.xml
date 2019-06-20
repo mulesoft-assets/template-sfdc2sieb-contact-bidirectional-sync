@@ -53,7 +53,7 @@ http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/s
     <flow name="queryFlowSalesforce">
         <os:retrieve doc:name="Retrieve lastQueryDateSalesforce" doc:id="ef652a21-7529-4c4b-a00e-829d881fa171" key="watermark"
             target="lastQueryDateSalesforce" objectStore="watermarkStoreSalesforce">
-            <os:default-value><![CDATA[${watermark.default.expression.sfdc}]]></os:default-value>
+            <os:default-value ><![CDATA[#[read(p('watermark.default.expression.sfdc'))]]]></os:default-value>
         </os:retrieve>
         <salesforce:query doc:name="Query contacts from Salesforce with filtering criteria" doc:id="048fe7ee-c084-448b-be4e-1de61c6cc956"
             config-ref="Salesforce_Config">
@@ -80,7 +80,7 @@ http://www.mulesoft.org/schema/mule/siebel http://www.mulesoft.org/schema/mule/s
     <flow name="queryFlowSiebel">
         <os:retrieve doc:name="Retrieve lastQueryDateSiebel" doc:id="f07ed3f6-b6f0-4adf-ac24-2bc8205e1805" key="watermark"
             target="lastQueryDateSiebel" objectStore="watermarkStoreSiebel">
-            <os:default-value><![CDATA[#[p('watermark.default.expression.sieb') as DateTime as String {format: "MM/dd/yy HH:mm:ss"}]]]></os:default-value>
+           <os:default-value ><![CDATA[#[read(p('watermark.default.expression.sieb')) as DateTime as String {format: "MM/dd/yy HH:mm:ss"}]]]></os:default-value>
         </os:retrieve>
         <ee:transform doc:name="Set Query for Siebel" doc:id="1f7f0d3a-83d8-4a49-aa07-5d8573341dc7">
             <ee:message>
